@@ -1,0 +1,24 @@
+# macOS
+.DS_Store
+._*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+Untitled-*
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Dependencies and build output
+node_modules/
+dist/
+
+# Logs and env
+*.log
+.env
+.env.*
+
+# Archived copies of the old site (contained the chalet's address)
+zOLD-*/
