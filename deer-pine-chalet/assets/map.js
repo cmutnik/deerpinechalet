@@ -1,4 +1,4 @@
-// "Things to do" map: Leaflet + CARTO/OpenStreetMap tiles, filterable by category.
+// "Things to do" map: Leaflet + Esri tiles, filterable by category.
 (function () {
   const CATS = window.CATEGORIES, P = window.PLACES;
   const visible = Object.fromEntries(Object.keys(CATS).map(k => [k, true]));
@@ -28,40 +28,35 @@
     document.getElementById("map").innerHTML = '<p style="padding:16px">The map could not load. Every place is still listed below.</p>';
   }
 
-  // Basemaps. "Simple" (the default) is CARTO Positron / Dark Matter: muted grey
-  // roads and few lines, so the colored pins carry the information. Guests can
-  // switch to "Terrain" (shaded mountains, no roads) or "Detailed" (full road map)
-  // with the layer button in the corner.
-  // tile.openstreetmap.org is only a backup: it answers 403 to pages it can't
-  // identify (no Referer, file://, some privacy settings).
+  // Basemaps. All keyless Esri layers. "Simple" (the default) is Esri Light/Dark
+  // Gray Canvas: muted greys so the colored pins carry the information. Guests can
+  // switch to "Terrain" (Esri topographic) or "Detailed" (Esri street map) with the
+  // layer button in the corner. (CARTO's free tiles now return an "API key
+  // required" image, so they are not used.) OpenStreetMap is only a backup: it
+  // answers 403 to pages it can't identify (no Referer, file://, some privacy settings).
   function addBasemap(m) {
     const dark = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches;
     const mapEl = document.getElementById("map");
+    const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/";
+    const esri = (path, opts) => L.tileLayer(ESRI + path + "/MapServer/tile/{z}/{y}/{x}",
+      Object.assign({ maxZoom: 19, maxNativeZoom: 16, attribution: "Tiles &copy; Esri" }, opts));
     const OSM = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-    const CARTO = OSM + ' &copy; <a href="https://carto.com/attributions">CARTO</a>';
-    const carto = style => L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/" + style + "/{z}/{x}/{y}{r}.png",
-      { subdomains: "abcd", maxZoom: 19, attribution: CARTO });
 
-    const simple = carto(dark ? "dark_all" : "light_all");
-    const terrain = L.layerGroup([
-      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}",
-        { maxNativeZoom: 13, maxZoom: 19, attribution: "Relief &copy; Esri" }),
-      carto("light_only_labels")
+    const simple = L.layerGroup([
+      esri(dark ? "Canvas/World_Dark_Gray_Base" : "Canvas/World_Light_Gray_Base"),
+      esri(dark ? "Canvas/World_Dark_Gray_Reference" : "Canvas/World_Light_Gray_Reference")
     ]);
-    const detailed = carto(dark ? "dark_all" : "voyager");
+    const terrain = esri("World_Topo_Map", { maxNativeZoom: 17 });
+    const detailed = esri("World_Street_Map", { maxNativeZoom: 17 });
     const osm = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
       { maxZoom: 19, attribution: OSM, referrerPolicy: "strict-origin-when-cross-origin" });
 
-    const bases = { "Simple": simple, "Terrain": terrain, "Detailed": dark ? osm : detailed };
     simple.addTo(m);
-    L.control.layers(bases, null, { position: "topright" }).addTo(m);
+    L.control.layers({ "Simple": simple, "Terrain": terrain, "Detailed": detailed }, null, { position: "topright" }).addTo(m);
 
-    // Only the OSM layer needs darkening; CARTO has a real dark style.
-    m.on("baselayerchange", e => mapEl.classList.toggle("invert-tiles", dark && e.layer === osm));
-
-    // If CARTO is blocked (several failures before any tile loads), fall back to OSM.
+    // If Esri is blocked (several failures before any tile loads), fall back to OSM.
     let loaded = 0, failed = 0;
-    simple.on("tileload", () => loaded++).on("tileerror", () => {
+    simple.getLayers()[0].on("tileload", () => loaded++).on("tileerror", () => {
       if (++failed === 4 && !loaded) {
         m.removeLayer(simple); osm.addTo(m);
         mapEl.classList.toggle("invert-tiles", dark);
