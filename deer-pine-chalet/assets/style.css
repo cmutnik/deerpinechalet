@@ -236,3 +236,30 @@ button.plain { font: inherit; background: none; border: 1px solid var(--line); c
 
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
 @media print { .site-header, .site-footer, #map, .legend { display: none; } }
+
+/* Mobile */
+html { scroll-padding-top: 72px; }
+.site-header { padding-top: env(safe-area-inset-top); }
+.wrap { padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right)); }
+.site-footer { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+a, button, summary, label { -webkit-tap-highlight-color: transparent; }
+button, .chip, .nav a, .tile { touch-action: manipulation; }
+input, select, textarea { font-size: 16px; }
+@media (max-width: 720px) {
+  body { font-size: 1rem; }
+  main { gap: 36px; padding-block: 24px 48px; }
+  /* one-line swipeable nav instead of a tall wrapped sticky header */
+  .site-header .wrap { gap: 4px; padding-block: 6px; }
+  .nav { flex-wrap: nowrap; overflow-x: auto; margin-left: 0; width: 100%; -webkit-overflow-scrolling: touch; }
+  .nav a { padding: 10px 12px; }
+  .brand svg { width: 28px; height: 20px; }
+  .tile { padding: 14px; }
+  .chip { padding: 9px 14px; }
+  .place-list button { padding: 12px 8px; }
+  .checklist label { padding: 14px 12px; }
+  .checklist input { width: 22px; height: 22px; }
+  button.plain { padding: 12px 16px; }
+  #map { height: clamp(320px, 55svh, 520px); }
+  .weather { grid-template-columns: repeat(2, 1fr); }
+  th, td { padding-right: 8px; }
+}
